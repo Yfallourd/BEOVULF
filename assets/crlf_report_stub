@@ -1,0 +1,80 @@
+CRLF report
+
+
+=== What is CRLF ? ===
+
+CRLF is short for Carriage Return, Line Feed which are the characters used to start a new line.
+A CRLF Injection attack occurs when a user manages to submit a CRLF into an application. This is most commonly done by
+modifying an HTTP parameter or URL.
+
+
+=== How can it be exploited : Response splitting ===
+
+Response splitting happens when the web-app is tricked into displaying the wrong content.
+
+Consider the following URL : http://victim.com/main.jsp?interface=advanced
+
+If the URL happens to be included in the HTTP response as follows :
+
+HTTP/1.1 302 Moved Temporarily
+Date: Sun, 03 Dec 2005 16:22:19 GMT
+Location: http://victim.com/main.jsp?interface=advanced
+<snip>
+
+Keep in mind that the CRLF characters \r\n are written as %0d%0a in Unicode.
+If the web-app is vulnerable to CRLF injection, the GET parameter "interface" can be exploited
+using the following payload :
+
+advanced%0d%0aContent-Length:%200%0d%0a%0d%0aHTTP/1.1%20200%20OK%0d%0aContent-
+Type:%20text/html%0d%0aContent-Length:%2035%0d%0a%0d%0a<html>Sorry,%20System%20Down</html>
+
+This, when added in the response, will trick the browser in displaying the payload while the actual
+response is subsequently ignored, making the answer look like :
+
+HTTP/1.1 302 Moved Temporarily
+Date: Sun, 03 Dec 2005 16:22:19 GMT
+Location: http://victim.com/main.jsp?interface=advanced
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: 35
+
+<html>Sorry,%20System%20Down</html>
+<other ignored data>
+
+This can be used to trick users and possibly execute scripts in the victim's browser.
+
+
+=== How it can be exploited : Content tampering ===
+
+Consider for example a logging system that keeps track of web-app usage.
+
+Common functionality would be to log incorrect values for a specific field as follows :
+
+INFO: Failed to parse val=cat
+
+Now if CRLF injection is possible, we can tamper with the log file by using an input
+like cat%0a%0aINFO:+User+logged+out%3dprofessorjin giving us the following entry :
+
+INFO: Failed to parse val=cat
+
+INFO: User logged out=professorjin
+
+
+
+=== How it can be fixed ===
+
+The problem comes from putting too much trust in user input. As with XSS, fixing this vulnerability
+means sanitizing user input to remove dangerous characters, for example by using a whitelist of
+allowed characters and removing all others.
+
+
+=== How it was found ===
+
+This was found by inputting an HTTP splitting payload in the vulnerable GET parameter field
+and comparing the response to see if it was the one we inputted via our payload.
+
+
+=== Vulnerable Parameters ===
+

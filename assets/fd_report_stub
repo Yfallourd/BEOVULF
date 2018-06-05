@@ -1,0 +1,64 @@
+XSS report
+
+
+=== What is XSS ? ===
+
+XSS is short for Cross-Site Scripting.
+It is an injection attack where input from a user is trusted by the web application and displayed on a page that other users can see.
+If legitimate data is sent, then nothing seems wrong. However, a field vulnerable to XSS will allow a user to add his own HTML or Javascript code disguised as an input.
+
+
+=== Reflected XSS versus Persistent XSS ===
+
+There are two main types of XSS vulnerabilities.
+
+The first one, called "Reflected XSS", happens when input from the user is displayed on the webpage as an immediate consequence of said user sending the data.
+For example, consider a "Search" field where you input "cats", the next page will most likely return something close to "Sorry, no results for "cats" could be found".
+
+The second one, called Persistent XSS, is more dangerous and happens when input from the user is stored on the server.
+For example, consider a sign-up form that asks for a username; your input will be stored on the server and displayed at later times.
+
+
+=== How can it be exploited ===
+
+Consider the following HTML code for an input field:
+
+<input type=text name="example" value ="">
+
+When a user sends data via this input field, the data will go into the "value" parameter.
+Consider that this field is vulnerable to XSS. A malicious user could input the following string :
+
+"><script>window.alert(1)</script>
+
+Which would now make our input field look like this :
+
+<input type=text name="example" value =""><script>window.alert(1)</script>">
+
+Notice that the first two characters shut the <input> object to start a new <script> one, allowing the execution of Javascript within the browser.
+Because the browser has no way of knowing if the <script> originates from the website or the user, it will execute it and, in this case, open a message window.
+
+However, such a vulnerability can be used to get your cookies and send them to the attacker who can then hijack your session. It can also be used to hide the vulnerable website behind what seems like an exact copy of it but the data, including passwords, is actually sent to the attacker.
+
+
+=== How it can be fixed ===
+
+The main cause of XSS vulnerability is trusting the user inputs. In cybersecurity, one must always assume that a user has malicious intents to make sure that everything is as secure as possible.
+
+To protect against XSS, the solution is called "Input sanitizing". Instead of blindly accepting the user input and storing or displaying it, the input is first encoded using various methods (Unicode encoding for example) before being used. Thus, our payload would become encoded at the source code level and decoded simply for visual purpose when browsing the website.
+
+To learn more, visit the OWASP website on the subject : 
+
+https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet
+
+
+=== How it was found ===
+
+Remember that XSS happens when input is not sanitized. As such, XSS can be detected by sending a payload with dangerous characters in all the potentially vulnerable fields and monitoring the content of the response to see if our payload has been sanitized or not.
+
+In our case, we sent the payload "/<payload>&.
+
+If the response contains "/<payload>& as is, then the input wasn't sanitized and there is an XSS vulnerability. Otherwise, the field is safe.
+
+
+=== Vulnerable Forms ===
+

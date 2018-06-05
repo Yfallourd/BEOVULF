@@ -1,0 +1,41 @@
+RCE report
+
+
+=== What is RCE ? ===
+
+RCE is short for Remote Code Execution.
+It is an injection attack where user input is passed to a code that executes a command containing
+said input.
+
+
+=== How can it be exploited ===
+
+Consider the following PHP snippet :
+
+$myvar = "varname";
+$x = $_GET['arg'];
+eval("\$myvar = \$x;");
+
+Its function is to execute input from a GET argument.
+However, if the input is not sanitized, adding the following parameter : /index.php?arg=1; phpinfo()
+will cause the phpinfo method to execute.
+
+This is a devastating vulnerability as it can allow the opening of a shell and access to everything.
+
+
+=== How it can be fixed ===
+
+The cause of this vulnerability is bad practice coding and trusted user input.
+
+The best way to fix this is to never evaluate user input. If the code is already written,
+any user input should be thoroughly validated to avoid dangerous characters.
+
+
+=== How it was found ===
+
+By using the payload ;echo "payload123456789" in all fields and parameters we can monitor
+the response for the string and deduce that the code has been executed. We however have to make
+sure that our input wasn't just reflected back without being executed.
+
+=== Vulnerable Fields and parameters ===
+

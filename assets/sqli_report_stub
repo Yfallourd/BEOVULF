@@ -1,0 +1,65 @@
+SQLi report
+
+
+=== What is SQLi ? ===
+
+SQLi is short for SQL injection.
+This attack consists of a web app executing an SQL query provided within trusted user input giving
+him the power to modify and leak the vulnerable database.
+
+
+=== How can it be exploited ===
+
+Consider the following SQL query :
+
+SELECT * FROM items
+WHERE owner = 'professorjin'
+AND itemname =;
+
+Where the itemname value is provided by a user via a field in the web-app.
+
+If the field is vulnerable, inputing "cat' OR 1=1"	 changes the query to the following :
+
+SELECT * FROM items
+WHERE owner = 'professorjin'
+AND itemname = 'cat' OR 1=1;
+
+Which is equivalent to SELECT * FROM items;
+
+It is even possible to execute any query by inputting a ; character and then writing your own query.
+This allows unlimited navigation of the database and possible password leakage.
+
+
+=== Blind injection ===
+
+The data can be retrieved two different ways depending on how vulnerable the application is.
+
+A normal SQL injection vulnerability outputs the data on the webpage. For example, say a webpage
+outputs news articles taken from the database by using a query that displays news with ID 10 in the
+browser. Injecting SQL in this query will still cause the browser to output the results on the
+page, even if it is a list of passwords !
+
+A blind SQL injection vulnerability however is when the web app reacts differently to the query
+result but doesn't output the results. This makes it harder to leak information but not impossible.
+A method would be to see if the page reacts differently to a query that returns TRUE and one that
+returns FALSE, then information can be leaked by checking if your query is TRUE or not.
+
+
+=== How it can be fixed ===
+
+This is a problem of trusting the user input too much. The solution here is to sanitize user input
+by encoding dangerous characters making them have no effect within an SQL query.
+
+We can also perform Input validation : if an integer value is expected, don't accept anything else.
+
+
+=== How it was found ===
+
+By inputting a ' character in every potentially vulnerable field and parameter, we can monitor
+the response page for a list of common DBMS errors as this would make the query invalid.
+
+Thus a list of errors contained in the file assets/sqlerrors was used to search for this
+vulnerability.
+
+=== Vulnerable Fields and parameters ===
+
